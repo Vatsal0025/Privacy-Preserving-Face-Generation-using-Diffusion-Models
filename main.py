@@ -21,7 +21,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument('--source_dir',
-                        default="",
+                        default="assets/datasets/..._align",
                         type=str,
                         help="source images folder path for impersonation and obfuscation")
     parser.add_argument('--test_dir',
@@ -35,8 +35,8 @@ def parse_args():
                         default=False,
                         type=bool)
 
-    parser.add_argument('--target_choice',
-                        default='2',
+    parser.add_argument('--target_choices',
+                        default='1, 2, 3',
                         type=str,
                         help='Choice of target identity, as in AMT-GAN. We use 4 target identities provided by AMT-GAN. We also add a synthesized target image for obfuscation')
     parser.add_argument("--test_model_name",
@@ -110,9 +110,16 @@ if __name__ == "__main__":
     #
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    # -------------------------------------------------------------
+    # -------------------------------------------------------------
+    # ADDED
+    # -------------------------------------------------------------
+    # -------------------------------------------------------------
+    args.target_choices = [x.strip() for x in args.target_choices.split(',')]
+
     # Load the stable diffusion pretrained parameters
     diff_model = StableDiffusionPipeline.from_pretrained(
-        'stabilityai/stable-diffusion-2-base').to(args.device)
+        'runwayml/stable-diffusion-v1-5').to(args.device)
     diff_model.scheduler = DDIMScheduler.from_config(
         diff_model.scheduler.config)
 

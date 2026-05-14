@@ -173,11 +173,16 @@ def get_file(src, tgt):
     if os.path.exists(tgt):
         print('cached')
         return tgt
-    tgt_dir = os.path.dirname(tgt)
-    if not os.path.exists(tgt_dir):
-        os.makedirs(tgt_dir)
-    file = requests.get(src)
-    open(tgt, 'wb').write(file.content)
+
+    os.makedirs(os.path.dirname(tgt), exist_ok=True)
+
+    with requests.get(src, stream=True) as r:
+        r.raise_for_status()
+        with open(tgt, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+
     return tgt
 
 
@@ -190,7 +195,7 @@ if __name__ == "__main__":
     parser.add_argument("-i",
                         "--input_imgs_path",
                         type=str,
-                        default="assets/datasets/...",
+                        default="assets/datasets/CelebA-HQ",
                         help="input images directory path")
     parser.add_argument("-o",
                         "--output_imgs_path",

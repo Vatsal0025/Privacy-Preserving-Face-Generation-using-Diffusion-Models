@@ -41,11 +41,20 @@ class MyTimer(object):
         self.average_time = 0.
 
 
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# ADDED
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+import torch
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 mtcnn = MTCNN(image_size=256,  # Size of the input image
               margin=0,
               post_process=False,
               select_largest=False,
-              device='cuda')
+              device=device)
 
 
 def alignment(image):
@@ -61,7 +70,9 @@ def load_FR_models(args, model_names):
             FR_models[model_name].append((112, 112))
             fr_model = ir152.IR_152((112, 112))
             fr_model.load_state_dict(torch.load(
-                'assets/face_recognition_models/ir152.pth'))
+                'assets/face_recognition_models/ir152.pth',
+                map_location=torch.device('cpu')
+            ))
             fr_model.to(args.device)
             fr_model.eval()
             FR_models[model_name].append(fr_model)
@@ -70,7 +81,9 @@ def load_FR_models(args, model_names):
             FR_models[model_name].append((112, 112))
             fr_model = irse.Backbone(50, 0.6, 'ir_se')
             fr_model.load_state_dict(torch.load(
-                'assets/face_recognition_models/irse50.pth'))
+                'assets/face_recognition_models/irse50.pth',
+                map_location=torch.device('cpu')
+            ))
             fr_model.to(args.device)
             fr_model.eval()
             FR_models[model_name].append(fr_model)
@@ -80,7 +93,9 @@ def load_FR_models(args, model_names):
             fr_model = facenet.InceptionResnetV1(
                 num_classes=8631, device=args.device)
             fr_model.load_state_dict(torch.load(
-                'assets/face_recognition_models/facenet.pth'))
+                'assets/face_recognition_models/facenet.pth',
+                map_location=torch.device('cpu')
+            ))
             fr_model.to(args.device)
             fr_model.eval()
             FR_models[model_name].append(fr_model)
@@ -89,7 +104,9 @@ def load_FR_models(args, model_names):
             FR_models[model_name].append((112, 112))
             fr_model = irse.MobileFaceNet(512)
             fr_model.load_state_dict(torch.load(
-                'assets/face_recognition_models/mobile_face.pth'))
+                'assets/face_recognition_models/mobile_face.pth',
+                map_location=torch.device('cpu')
+            ))
             fr_model.to(args.device)
             fr_model.eval()
             FR_models[model_name].append(fr_model)

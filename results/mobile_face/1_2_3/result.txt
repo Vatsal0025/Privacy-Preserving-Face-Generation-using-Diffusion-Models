@@ -1,0 +1,7 @@
+Protection: False
+mobile_face PSR in FAR@0.1: 1.0000, PSR in FAR@0.01: 0.9000, PSR in FAR@0.001: 0.6000
+PSNR: inf, SSIM: 1.0000, FID: -0.0001
+
+Protection: True
+mobile_face PSR in FAR@0.1: 1.0000, PSR in FAR@0.01: 1.0000, PSR in FAR@0.001: 0.9000
+PSNR: 23.6538, SSIM: 0.7609, FID: 73.4675

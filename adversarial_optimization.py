@@ -33,7 +33,12 @@ class Adversarial_Opt:
         self.protected_image_dir = args.protected_image_dir
         self.comparison_null_text = args.comparison_null_text
         #
-        self.target_choice = args.target_choice
+        # ---------------------------------------------------------------------------------
+        # ---------------------------------------------------------------------------------
+        # ADDED
+        # ---------------------------------------------------------------------------------
+        # ---------------------------------------------------------------------------------
+        self.target_choices = args.target_choices
         #
         self.is_makeup = args.is_makeup
         self.source_text = args.source_text
@@ -268,9 +273,20 @@ class Adversarial_Opt:
         adversarial_image = self.latent2image(latents)
         adversarial_image = adversarial_image[1:]
 
+        # result_dir = self.protected_image_dir + '/' + \
+        #     self.test_model_name[0] + '/' + \
+        #     self.target_choice + '/' + image_name
+
+        # --------------------------------------------------------------------
+        # --------------------------------------------------------------------
+        # ADDED
+        # --------------------------------------------------------------------
+        # --------------------------------------------------------------------
+        target_folder = "_".join([str(t) for t in self.target_choices])
+
         result_dir = self.protected_image_dir + '/' + \
             self.test_model_name[0] + '/' + \
-            self.target_choice + '/' + image_name
+            target_folder + '/' + image_name
 
         adversarial_img = cv2.cvtColor(adversarial_image[0], cv2.COLOR_RGB2BGR)
         cv2.imwrite(result_dir + ".png", adversarial_img)
@@ -287,14 +303,20 @@ class Adversarial_Opt:
             (diff_absolute[0] * 255).astype(np.uint8)).save(result_dir + "_diff_absolute.png")
         """
 
+    # ---------------------------------------------------
+    # ---------------------------------------------------
+    # ADDED
+    # ---------------------------------------------------
+    # ---------------------------------------------------
     def attacker(self,
-                 image,
-                 image_name,
-                 source_embeddings,
-                 target_embeddings,
-                 controller,
-                 null_text_dir=None,
-                 bb_src1=None):
+             image,
+             image_name,
+             source_embeddings,
+             target_embeddings_list,
+             fusion_embeddings,
+             controller,
+             null_text_dir=None,
+             bb_src1=None):
         # lat[0], lat[1], lat[2], ...
         inversion_latents = self.ddim_inversion(image)
         # reverse
@@ -396,8 +418,18 @@ class Adversarial_Opt:
                 clip_loss = clip_loss * self.makeup_weight
             #
             output_embeddings = self.get_FR_embeddings(out_image)
+            # adv_loss = self.cosine_loss(
+            #     output_embeddings, target_embeddings, source_embeddings) * self.adv_optim_weight
+
+            # ---------------------------------------------------------
+            # ---------------------------------------------------------
+            # ADDED
+            # ---------------------------------------------------------
+            # ---------------------------------------------------------
             adv_loss = self.cosine_loss(
-                output_embeddings, target_embeddings, source_embeddings) * self.adv_optim_weight
+                output_embeddings, fusion_embeddings, source_embeddings
+            ) * self.adv_optim_weight
+
             self_attn_loss = controller.loss
             loss = adv_loss + self_attn_loss
             if self.is_makeup:
@@ -405,7 +437,7 @@ class Adversarial_Opt:
             #
             print()
             print('adv_loss: ', adv_loss.item())
-            print('self_attn_loss: ', self_attn_loss.item())
+            print('self_attn_loss: ', float(self_attn_loss))
             if self.is_makeup:
                 print('clip_loss: ', clip_loss.item())
             print('loss: ', loss.item())
@@ -433,15 +465,46 @@ class Adversarial_Opt:
     def run(self):
         timer = MyTimer()
         time_list = []
+        # result_dir = self.protected_image_dir + '/' + \
+        #     self.test_model_name[0] + '/' + self.target_choice
+
+        # -----------------------------------------------------
+        # -----------------------------------------------------
+        # ADDED 
+        # -----------------------------------------------------
+        # -----------------------------------------------------
+        target_folder = "_".join([str(t) for t in self.target_choices])
+
         result_dir = self.protected_image_dir + '/' + \
-            self.test_model_name[0] + '/' + self.target_choice
+            self.test_model_name[0] + '/' + target_folder
+
         if not os.path.exists(result_dir):
             os.makedirs(result_dir)
 
-        target_image, _ = get_target_test_images(
-            self.target_choice, self.device, self.MTCNN_cropping)
+        # target_image, _ = get_target_test_images(
+        #     self.target_choice, self.device, self.MTCNN_cropping)
+        # with torch.no_grad():
+        #     target_embeddings = self.get_FR_embeddings(target_image)
+        # -------------------------------------------------------
+        # -------------------------------------------------------
+        # ADDED
+        # -------------------------------------------------------
+        # -------------------------------------------------------
+        target_images = []
+        for c in self.target_choices:
+            img, _ = get_target_test_images(c, self.device, self.MTCNN_cropping)
+            target_images.append(img)
+
         with torch.no_grad():
-            target_embeddings = self.get_FR_embeddings(target_image)
+            target_embeddings_list = [self.get_FR_embeddings(img) for img in target_images]
+
+        # 🔥 FUSION TARGET
+        fusion_embeddings = []
+        for i in range(len(target_embeddings_list[0])):  # for each FR model
+            emb_stack = torch.stack([target_embeddings_list[k][i] for k in range(len(target_embeddings_list))])
+            emb_mean = torch.mean(emb_stack, dim=0)
+            emb_mean = emb_mean / emb_mean.norm(dim=1, keepdim=True)
+            fusion_embeddings.append(emb_mean)
 
         for i, (fname, image) in enumerate(self.dataloader):
             image_name = fname[0]
@@ -480,13 +543,27 @@ class Adversarial_Opt:
             #
             timer.tic()
             #
+            # latents = self.attacker(image,
+            #                         image_name,
+            #                         source_embeddings,
+            #                         target_embeddings,
+            #                         controller,
+            #                         null_text_dir,
+            #                         bb_src1)
+            # --------------------------------------------------------
+            # --------------------------------------------------------
+            # ADDED
+            # --------------------------------------------------------
+            # --------------------------------------------------------
             latents = self.attacker(image,
-                                    image_name,
-                                    source_embeddings,
-                                    target_embeddings,
-                                    controller,
-                                    null_text_dir,
-                                    bb_src1)
+                        image_name,
+                        source_embeddings,
+                        target_embeddings_list,
+                        fusion_embeddings,
+                        controller,
+                        null_text_dir,
+                        bb_src1)
+
             #
             avg_time = timer.toc()
             time_list.append(avg_time)

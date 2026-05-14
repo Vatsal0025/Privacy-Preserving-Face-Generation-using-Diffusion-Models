@@ -22,8 +22,19 @@ def attack_local_models_obfuscation(args, protection):
                'facenet': 0.409131,
                'mobile_face': 0.301611}
 
+    # result_dir = args.protected_image_dir + '/' + \
+    #     args.test_model_name[0] + '/' + args.target_choice
+
+    # --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    # ADDED
+    # --------------------------------------------------------------------
+    # --------------------------------------------------------------------
+    target_folder = "_".join([str(t) for t in args.target_choices])
+
     result_dir = args.protected_image_dir + '/' + \
-        args.test_model_name[0] + '/' + args.target_choice
+        args.test_model_name[0] + '/' + target_folder
+
     result_fn = os.path.join(result_dir, "result.txt")
 
     print('Protection:', protection)

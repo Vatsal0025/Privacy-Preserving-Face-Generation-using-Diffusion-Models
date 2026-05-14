@@ -1,0 +1,23 @@
+# Environments
+venv/
+__pycache__/
+**/__pycache__/
+
+# Large model files
+assets/face_recognition_models/*.pth
+
+# Datasets and images
+assets/datasets/
+assets/obfs_target_images/
+# assets/target_images/
+# assets/test_images/
+assets/*.zip
+
+# Output and temp files
+# results/
+# temp/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
