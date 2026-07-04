@@ -43,54 +43,9 @@ This project solves these issues by generating an **ambiguous identity embedding
 
 ---
 
-# Proposed Architecture
+## Proposed Architecture
 
-```mermaid
-flowchart TD
-
-A[Input Face Image]
-B[Face Alignment]
-C[ArcFace Embedding Extraction]
-D[Select Multiple Target Identities]
-E[Extract Target Embeddings]
-F[Identity Fusion Module]
-G[DDIM Inversion]
-H[Stable Diffusion Latent Space]
-I[Adversarial Optimization]
-J[Attention Guidance]
-K[Reverse Diffusion]
-L[Privacy Protected Face]
-
-A --> B
-B --> C
-C --> G
-
-D --> E
-E --> F
-F --> I
-
-G --> H
-H --> I
-J --> I
-I --> K
-K --> L
-```
-
----
-
-# Pipeline
-
-```mermaid
-graph LR
-
-Input --> Preprocessing
-Preprocessing --> Embedding
-Embedding --> Fusion
-Fusion --> Diffusion
-Diffusion --> Optimization
-Optimization --> ProtectedFace
-
-```
+![Proposed Architecture](images/proposed_architecture.png)# Pipeline
 
 ---
 
