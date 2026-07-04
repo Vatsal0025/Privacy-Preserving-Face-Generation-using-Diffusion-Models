@@ -45,7 +45,7 @@ This project solves these issues by generating an **ambiguous identity embedding
 
 ## Proposed Architecture
 
-![Proposed Architecture](images/proposed_architecture.png)# Pipeline
+![Proposed Architecture](images/proposed_architecture.png)
 
 ---
 
